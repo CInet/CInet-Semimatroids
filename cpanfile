@@ -7,5 +7,5 @@ requires 'Path::Tiny';
 requires 'IPC::Run3';
 
 requires 'CInet::Base', '>= v0.9.1';
-requires 'CInet::Polyhedra';
+requires 'CInet::Polyhedral';
 requires 'CInet::Bridge::SoPlex';
