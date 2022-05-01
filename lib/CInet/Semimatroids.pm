@@ -31,6 +31,21 @@ sub h {
 use CInet::Hash::FaceKey;
 tie my %LPS, 'CInet::Hash::FaceKey';
 sub tight_polymatroids {
+    # Cache the costly operation of writing the polymatroid $h component
+    # of a linear constraint in the syntax of SoPlex.
+    sub prepare_system {
+        map {
+            my ($h, $rel, $val) = @$_;
+            my @c;
+            for my $i (0 .. $h->$#*) {
+                next if $h->[$i] == 0;
+                my $a = abs($h->[$i]);
+                push @c, ($h->[$i] < 0 ? '-' : '+'), $a, "x$i";
+            }
+            [ join(' ', @c), $rel, $val ]
+        } @_
+    }
+
     my $cube = shift;
     $LPS{[ $cube->set, [] ]} //= do {
         my $N = $cube->set;
@@ -54,7 +69,7 @@ sub tight_polymatroids {
                 ), '>=', 0 ];
         }
 
-        \@system
+        [ prepare_system @system ]
     }
 }
 
@@ -92,17 +107,7 @@ sub is_feasible {
 	say {$fh} "Maximize";
 	say {$fh} " obj: 1";
     say {$fh} "Subject To";
-    for (@_) {
-        my ($h, $rel, $val) = @$_;
-        my @c;
-        for my $i (0 .. $h->$#*) {
-            next if $h->[$i] == 0;
-            my $a = abs($h->[$i]);
-            push @c, ($h->[$i] < 0 ? '-' : '+'), $a, "x$i";
-        }
-        push @c, $rel, $val;
-        say {$fh} ' ', join(' ', @c);
-	}
+    say {$fh} ' ' . join(' ', @$_) for @_;
     say {$fh} "End";
     close $fh;
 
