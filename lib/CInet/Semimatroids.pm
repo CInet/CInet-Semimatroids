@@ -117,7 +117,13 @@ sub is_feasible {
         $status = $line if $line =~ /^SoPlex status/;
     };
     run3 [soplex, '-f0', $in->realpath], \undef, $reader, \undef;
-    die 'did not receive an answer from soplex' if not defined($status);
+
+    if (not defined $status) {
+        die 'did not receive an answer from soplex: ' . $in->realpath;
+    }
+    else {
+        $in->remove;
+    }
 
     $status !~ /infeasible/
 }
